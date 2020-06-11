@@ -1,1 +1,1 @@
-web: python VkBot.py
+web: gunicorn VkBot.py
