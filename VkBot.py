@@ -1,9 +1,11 @@
 import random
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import datetime
 import threading
 import time
+import configparser
 
 #--------------------------------------------------------------------------------
 
@@ -50,8 +52,8 @@ def check():
 				for id in mailingIds:
 					try:
 						write_msg(id, i[2])
-					except Exception as ex:
-						print("error:", ex)
+					except:
+						pass
 				time.sleep(100)
 				break
 
@@ -74,30 +76,26 @@ with open("users.txt", "r") as file:
 thread = threading.Thread(target=check)
 thread.start()
 
-while True:
-	try:
-		for event in longpoll.listen():
-			if event.type == VkEventType.MESSAGE_NEW:
-				if event.to_me:
-					id = event.user_id
-					if event.text.lower() == "подписаться":
-						if id in mailingIds:
-							write_msg(id, "Вы уже подписаны!")
-						else:
-							mailingIds.append(id)
-							write_msg(id, "Вы успешно подписались на рассылку")
-							save()
+for event in longpoll.listen():
+	if event.type == VkEventType.MESSAGE_NEW:
+		if event.to_me:
+			id = event.user_id
+			if event.text.lower() == "подписаться":
+				if id in mailingIds:
+					write_msg(id, "Вы уже подписаны!")
+				else:
+					mailingIds.append(id)
+					write_msg(id, "Вы успешно подписались на рассылку")
+					save()
 
-					elif event.text.lower() == "отписаться":
-						if id in mailingIds:
-							mailingIds.remove(id)
-							write_msg(id, "Вы отписались от рассылки")
-							save()
-						else:
-							write_msg(id, "Вы не подписывались")
+			elif event.text.lower() == "отписаться":
+				if id in mailingIds:
+					mailingIds.remove(id)
+					write_msg(id, "Вы отписались от рассылки")
+					save()
+				else:
+					write_msg(id, "Вы не подписывались")
 
-					else:
-						write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
-	except Exception as ex:
-		print("error:", ex)
+			else:
+				write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
 
