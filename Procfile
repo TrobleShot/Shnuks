@@ -1,1 +1,1 @@
-web: gunicorn VkBot.py
+worker: python3 VkBot.py
