@@ -1,1 +1,1 @@
-worker: python VkBot.py
+web: python VkBot.py
