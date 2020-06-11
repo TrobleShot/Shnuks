@@ -1,18 +1,16 @@
 import random
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import datetime
 import threading
 import time
-import configparser
 
 #--------------------------------------------------------------------------------
 
 mails = [(8, 25, "Начало первой пары через 5 минут!"), #первое число - часы, второе - минуты, строка - текст сообщения
 		 (10, 15, "Начало второй пары через 5 минут!"),
 		 (12, 5, "Начало третьей пары через 5 минут!"),
-		 (21, 25, "ТЕСТ 19:55"),
+		 (21, 50, "ТЕСТ 19:55"),
 		 (13, 55, "Начало четвертой пары через 5 минут!")]
 
 #--------------------------------------------------------------------------------
@@ -46,14 +44,14 @@ def write_msg(user_id, message):
 
 def check():
 	while True:
-		now = datetime.datetime.now()
+		now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
 		for i in mails:
 			if now.hour == i[0] and now.minute == i[1]:
 				for id in mailingIds:
 					try:
 						write_msg(id, i[2])
-					except:
-						pass
+					except Exception as ex:
+						print("error:", ex)
 				time.sleep(100)
 				break
 
@@ -76,26 +74,30 @@ with open("users.txt", "r") as file:
 thread = threading.Thread(target=check)
 thread.start()
 
-for event in longpoll.listen():
-	if event.type == VkEventType.MESSAGE_NEW:
-		if event.to_me:
-			id = event.user_id
-			if event.text.lower() == "подписаться":
-				if id in mailingIds:
-					write_msg(id, "Вы уже подписаны!")
-				else:
-					mailingIds.append(id)
-					write_msg(id, "Вы успешно подписались на рассылку")
-					save()
+while True:
+	try:
+		for event in longpoll.listen():
+			if event.type == VkEventType.MESSAGE_NEW:
+				if event.to_me:
+					id = event.user_id
+					if event.text.lower() == "подписаться":
+						if id in mailingIds:
+							write_msg(id, "Вы уже подписаны!")
+						else:
+							mailingIds.append(id)
+							write_msg(id, "Вы успешно подписались на рассылку")
+							save()
 
-			elif event.text.lower() == "отписаться":
-				if id in mailingIds:
-					mailingIds.remove(id)
-					write_msg(id, "Вы отписались от рассылки")
-					save()
-				else:
-					write_msg(id, "Вы не подписывались")
+					elif event.text.lower() == "отписаться":
+						if id in mailingIds:
+							mailingIds.remove(id)
+							write_msg(id, "Вы отписались от рассылки")
+							save()
+						else:
+							write_msg(id, "Вы не подписывались")
 
-			else:
-				write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
+					else:
+						write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
+	except Exception as ex:
+		print("error:", ex)
 
