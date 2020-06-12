@@ -134,7 +134,8 @@ class Bot:
 					if event.type == VkEventType.MESSAGE_NEW:
 						if event.to_me:
 							id = event.user_id
-							if event.text.lower() == "подписаться":
+							msg = event.text.lower()
+							if msg == "подписаться":
 								with connection.cursor() as cursor:
 									cursor.execute("INSERT IGNORE INTO Users (user_id) VALUES (%s)", id)
 									if cursor.rowcount == 0:
@@ -143,7 +144,7 @@ class Bot:
 										self.write_msg(id, "Вы успешно подписались на рассылку")
 									connection.commit()
 
-							elif event.text.lower() == "отписаться":
+							elif msg == "отписаться":
 								with connection.cursor() as cursor:
 									cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
 									if cursor.rowcount != 0:
