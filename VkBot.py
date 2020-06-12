@@ -6,8 +6,6 @@ import threading
 import time
 import pymysql
 from pymysql.cursors import DictCursor
-from bs4 import BeautifulSoup
-import requests
 
 
 class Mail:
@@ -152,13 +150,7 @@ class Bot:
 									else:
 										self.write_msg(id, "Вы не подписывались")
 									connection.commit()
-							elif msg.startswith('вики, '):
-								response = requests.get('https://ru.wikipedia.org/wiki/' + msg.replace('Вики, ', ''))
-								soup = BeautifulSoup(response.text, 'html.parser')
-								tag = soup.find('div', {'class': 'mw-parser-output'})
-								self.write_msg(id, '\n'.join([e.text.replace('[править | править код]', '') for e in tag.children if e.name in ('p', 'h2')][:20]))
-
-
+						
 							else:
 								self.write_msg(id, "Привет! Чтобы подписаться на рассылку, нажми кнопку \"Подписаться\"")
 
