@@ -81,6 +81,9 @@ class Bot:
 			thread.start()
 
 			print("Создал!")
+			print("Запускаю \"антисон\"...")
+			self.antisleep()
+			print("Запустил!")
 			print("Бот запущен")
 
 		except Exception as ex:
@@ -111,8 +114,17 @@ class Bot:
 
 			except Exception as ex:
 				print("error (check):", ex)
-
-
+	
+	
+	def antisleep(self):
+		try:
+			threading.Timer(600, self.antisleep).start()
+			with connection.cursor() as cursor:
+				cursor.execute("SELECT * FROM Users")
+		except Exception as ex:
+			print("error (antisleep):", ex)
+			
+			
 	def start(self):
 		while True:
 			try:
@@ -152,3 +164,4 @@ class Bot:
 if __name__ == "__main__":
 	bot = Bot()
 	bot.start()
+
