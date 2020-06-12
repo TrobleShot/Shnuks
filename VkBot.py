@@ -4,16 +4,33 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 import datetime
 import threading
 import time
+import pymysql
+from pymysql.cursors import DictCursor
+
+
+class Mail:
+	def __init__(self, hours: int, minutes: int, message: str):
+		self.hours = hours
+		self.minutes = minutes
+		self.message = message
+		self.send = True
 
 #--------------------------------------------------------------------------------
 
-mails = [(8, 25, "Начало первой пары через 5 минут!"), #первое число - часы, второе - минуты, строка - текст сообщения
-		 (10, 15, "Начало второй пары через 5 минут!"),
-		 (12, 5, "Начало третьей пары через 5 минут!"),
-		 (21, 55, "ТЕСТ 19:55"),
-		 (13, 55, "Начало четвертой пары через 5 минут!")]
+mails = [Mail(8, 25, "Начало первой пары через 5 минут!"), #первое число - часы, второе - минуты, строка - текст сообщения
+		 Mail(10, 15, "Начало второй пары через 5 минут!"),
+		 Mail(12, 5, "Начало третьей пары через 5 минут!"),
+		 Mail(12, 55, "ТЕСТ 12:51"),
+		 Mail(13, 55, "Начало четвертой пары через 5 минут!")]
 
-#--------------------------------------------------------------------------------
+token = "663f6be35f8b95159a155b8534c52b28c2a6a1b6252b3f526c4b03788f73e6d1cc66d65fa978eddbea104"
+
+connection = pymysql.connect(host='sql7.freesqldatabase.com',
+						  	 user='sql7347793',
+						  	 password='IghqNH1JGK',
+						  	 db='sql7347793',
+						  	 charset='utf8mb4',
+						  	 cursorclass=DictCursor)
 
 keyboard = '''
 {
@@ -39,65 +56,95 @@ keyboard = '''
 }
 '''
 
-def write_msg(user_id, message):
-	vk.method('messages.send', {'user_id': user_id, 'message': message, 'keyboard': keyboard, 'random_id': random.randint(0, 100000000)})
+#--------------------------------------------------------------------------------
 
-def check():
-	while True:
-		now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-		for i in mails:
-			if now.hour == i[0] and now.minute == i[1]:
-				for id in mailingIds:
-					try:
-						write_msg(id, i[2])
-					except Exception as ex:
-						print("error:", ex)
-				time.sleep(100)
-				break
+class Bot:
+	def __init__(self):
+		try:
+			print("Подключение к бд...")
+			print("Подключился!")
+			print("Создание таблицы Users, если она не существует...")
+			with connection.cursor() as cursor:
+				cursor.execute("CREATE TABLE IF NOT EXISTS Users (user_id INT PRIMARY KEY);")
+			print("Создал!")
 
-def save():
-	with open("users.txt", "w") as file:
-		file.writelines([str(x) + "\n" for x in mailingIds])
-		
+			self.vk = vk_api.VkApi(token=token)
+			self.longpoll = VkLongPoll(self.vk)
 
-token = "663f6be35f8b95159a155b8534c52b28c2a6a1b6252b3f526c4b03788f73e6d1cc66d65fa978eddbea104"
+			print("Создаю поток...")
 
-vk = vk_api.VkApi(token=token)
-longpoll = VkLongPoll(vk)
+			thread = threading.Thread(target=self.check)
+			thread.start()
 
-print("Бот запущен")
+			print("Создал!")
+			print("Бот запущен")
 
-mailingIds = []
-with open("users.txt", "r") as file:
-	mailingIds = [int(x) for x in file.readlines()]
+		except Exception as ex:
+			print("error (__init__):", ex)
 
-thread = threading.Thread(target=check)
-thread.start()
 
-while True:
-	try:
-		for event in longpoll.listen():
-			if event.type == VkEventType.MESSAGE_NEW:
-				if event.to_me:
-					id = event.user_id
-					if event.text.lower() == "подписаться":
-						if id in mailingIds:
-							write_msg(id, "Вы уже подписаны!")
-						else:
-							mailingIds.append(id)
-							write_msg(id, "Вы успешно подписались на рассылку")
-							save()
+	def write_msg(self, user_id, message):
+		try:
+			self.vk.method('messages.send', {'user_id': user_id, 'message': message, 'keyboard': keyboard, 'random_id': random.randint(0, 100000000)})
+		except Exception as ex:
+			print("error (write_msg, {0}, {1}):".format(user_id, message), ex)
 
-					elif event.text.lower() == "отписаться":
-						if id in mailingIds:
-							mailingIds.remove(id)
-							write_msg(id, "Вы отписались от рассылки")
-							save()
-						else:
-							write_msg(id, "Вы не подписывались")
 
+	def check(self):
+		while True:
+			try:
+				now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+				for mail in mails:
+					if now.hour == mail.hours and now.minute == mail.minutes:
+						if mail.send:
+							mail.send = False
+							with connection.cursor() as cursor:
+								cursor.execute("SELECT user_id FROM Users")
+								for row in cursor:
+									self.write_msg(row["user_id"], mail.message)
 					else:
-						write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
-	except Exception as ex:
-		print("error:", ex)
+						mail.send = True
 
+			except Exception as ex:
+				print("error (check):", ex)
+
+
+	def start(self):
+		while True:
+			try:
+				for event in self.longpoll.listen():
+					if event.type == VkEventType.MESSAGE_NEW:
+						if event.to_me:
+							id = event.user_id
+							if event.text.lower() == "подписаться":
+								with connection.cursor() as cursor:
+									cursor.execute("INSERT IGNORE INTO Users (user_id) VALUES (%s)", id)
+									if cursor.rowcount == 0:
+										self.write_msg(id, "Вы уже подписаны!")
+									else:
+										self.write_msg(id, "Вы успешно подписались на рассылку")
+									connection.commit()
+
+							elif event.text.lower() == "отписаться":
+								with connection.cursor() as cursor:
+									cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
+									if cursor.rowcount != 0:
+										self.write_msg(id, "Вы отписались от рассылки")
+									else:
+										self.write_msg(id, "Вы не подписывались")
+									connection.commit()
+
+							else:
+								self.write_msg(id, "Привет! Чтобы подписаться на рассылку, нажми кнопку \"Подписаться\"")
+
+			except Exception as ex:
+				print("error (start):", ex)
+
+
+	def __del__(self):
+		connection.close()
+
+
+if __name__ == "__main__":
+	bot = Bot()
+	bot.start()
