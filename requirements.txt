@@ -1,4 +1,4 @@
 vk_api
 datetime
 PyMysql
-bs4
+wikipedia
