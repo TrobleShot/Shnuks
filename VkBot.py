@@ -7,6 +7,9 @@ import time
 import pymysql
 from pymysql.cursors import DictCursor
 import wikipedia
+import pyowm
+import math
+from translate import Translator
 
 
 class Mail:
@@ -141,7 +144,7 @@ class Bot:
 								if cursor.rowcount == 0:
 									self.write_msg(id, "Вы уже подписаны!")
 								else:
-									self.write_msg(id, "Вы успешно подписались на рассылку")
+									self.write_msg(id, "Вы успешно подписались на рассылку\nВведите \"Отписаться\" чтобы отключить рассылку.")
 								connection.commit()
 
 						elif msg == "отписаться":
@@ -153,15 +156,34 @@ class Bot:
 									self.write_msg(id, "Вы не подписывались")
 								connection.commit()
 
-						elif msg.startswith('вики, '):
+						elif msg == "команды":
+							self.write_msg(id, "⚙Список команд:")
+							self.write_msg(id, "🔍Для поиска в Википедии введите: \"Поиск <ваш запрос>\". ")
+							self.write_msg(id, "🌦 Чтобы узнать погоду введите: \"Погода <город>\". ")
+							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"Подписаться\". ")
+							connection.commit()
+
+						elif msg.startswith('поиск '):
 							wikipedia.set_lang("ru")
-							find = msg.replace('вики, ', '')
+							find = msg.replace('поиск ', '')
+							self.write_msg(id, "Ищу результаты по поиску в википедии: " + find.title() + " ...")
 							infor = wikipedia.summary(find, sentences=3)
 							self.write_msg(id, str(infor))
 							connection.commit()
 
+						elif msg.startswith('погода '):
+							city = msg.replace('погода ', '')
+							self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
+							owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = "RU")
+							observation = owm.weather_at_place(city)
+							w = observation.get_weather()
+							temperature = w.get_temperature('celsius')['temp']
+							translator= Translator(from_lang="english",to_lang="russian")
+							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + translator.translate(w.get_status()))
+							connection.commit()
+
 						else:
-							self.write_msg(id, "Ошибка в запросе. Для поиска в википедии введите: Вики, \"запрос\"")
+							self.write_msg(id, "Не верный запрос. Введите \" Команды \", чтобы узнать список команд.")
 
 			except Exception as ex:
 				connection.connect_timeout = 10000000000000
