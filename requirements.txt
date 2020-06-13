@@ -3,5 +3,4 @@ datetime
 PyMysql
 wikipedia
 pyowm
-math
 translate
