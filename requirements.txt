@@ -2,3 +2,6 @@ vk_api
 datetime
 PyMysql
 wikipedia
+pyowm
+math
+translate
