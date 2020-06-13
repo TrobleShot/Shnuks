@@ -6,6 +6,7 @@ import threading
 import time
 import pymysql
 from pymysql.cursors import DictCursor
+import wikipedia
 
 
 class Mail:
@@ -17,14 +18,9 @@ class Mail:
 
 #--------------------------------------------------------------------------------
 
-mails = [Mail(8, 25, "Начало первой пары через 5 минут!"), #первое число - часы, второе - минуты, строка - текст сообщения
-		 Mail(8, 30, "Первая пара началась!"),
-		 Mail(10, 15, "Начало второй пары через 5 минут!"),
-	 	 Mail(10, 20, "Вторая пара началась!"),
-		 Mail(12, 5, "Начало третьей пары через 5 минут!"),
-		 Mail(12, 10, "Третья пара началась!"),
-	 	 Mail(13, 55, "Начало четвертой пары через 5 минут!"),
-		 Mail(14, 0, "Четвертая пара началась!")]
+mails = [Mail(12, 27, "Привет!"),
+		 Mail(12, 28, "Снова привет!"),
+		 Mail(12, 29, "Привет №3")]
 
 token = "663f6be35f8b95159a155b8534c52b28c2a6a1b6252b3f526c4b03788f73e6d1cc66d65fa978eddbea104"
 
@@ -80,10 +76,13 @@ class Bot:
 			thread.start()
 
 			print("Создал!")
+
 			print("Запускаю \"антисон\"...")
 			self.antisleep()
 			print("Запустил!")
+
 			print("Бот запущен")
+
 
 		except Exception as ex:
 			print("error (__init__):", ex)
@@ -113,8 +112,8 @@ class Bot:
 
 			except Exception as ex:
 				print("error (check):", ex)
-	
-	
+
+
 	def antisleep(self):
 		try:
 			threading.Timer(600, self.antisleep).start()
@@ -122,38 +121,45 @@ class Bot:
 				cursor.execute("SELECT * FROM Users")
 		except Exception as ex:
 			print("error (antisleep):", ex)
-			
-			
+
+
 	def start(self):
 		while True:
 			try:
 				for event in self.longpoll.listen():
-					if event.type == VkEventType.MESSAGE_NEW:
-						if event.to_me:
-							id = event.user_id
-							msg = event.text.lower()
-							if msg == "подписаться":
-								with connection.cursor() as cursor:
-									cursor.execute("INSERT IGNORE INTO Users (user_id) VALUES (%s)", id)
-									if cursor.rowcount == 0:
-										self.write_msg(id, "Вы уже подписаны!")
-									else:
-										self.write_msg(id, "Вы успешно подписались на рассылку")
-									connection.commit()
+					if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+						id = event.user_id
+						msg = event.text.lower()
+						if msg == "подписаться":
+							with connection.cursor() as cursor:
+								cursor.execute("INSERT IGNORE INTO Users (user_id) VALUES (%s)", id)
+								if cursor.rowcount == 0:
+									self.write_msg(id, "Вы уже подписаны!")
+								else:
+									self.write_msg(id, "Вы успешно подписались на рассылку")
+								connection.commit()
 
-							elif msg == "отписаться":
-								with connection.cursor() as cursor:
-									cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
-									if cursor.rowcount != 0:
-										self.write_msg(id, "Вы отписались от рассылки")
-									else:
-										self.write_msg(id, "Вы не подписывались")
-									connection.commit()
-						
-							else:
-								self.write_msg(id, "Привет! Чтобы получать уведомления о начале пары, нажми кнопку \"Подписаться\"")
+						elif msg == "отписаться":
+							with connection.cursor() as cursor:
+								cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
+								if cursor.rowcount != 0:
+									self.write_msg(id, "Вы отписались от рассылки")
+								else:
+									self.write_msg(id, "Вы не подписывались")
+								connection.commit()
+
+						elif msg.startswith('вики, '):
+							wikipedia.set_lang("ru")
+							find = msg.replace('вики, ', '')
+							infor = wikipedia.summary(find, sentences=3)
+							self.write_msg(id, str(infor))
+							connection.commit()
+
+						else:
+							self.write_msg(id, "Ошибка в запросе. Для поиска в википедии введите: Вики, \"запрос\"")
 
 			except Exception as ex:
+				connection.connect_timeout = 10000000000000
 				print("error (start):", ex)
 
 
@@ -164,4 +170,3 @@ class Bot:
 if __name__ == "__main__":
 	bot = Bot()
 	bot.start()
-
