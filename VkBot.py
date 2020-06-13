@@ -181,7 +181,21 @@ class Bot:
 							translator= Translator(from_lang="english",to_lang="russian")
 							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + translator.translate(w.get_status()))
 							connection.commit()
+							
+						elif msg.startswith('rus eng '):
+							trns = msg.replace('rus eng ', '')
+							self.write_msg(id, "Перевожу текст с русского на английский...")
+							translator= Translator(from_lang="russian",to_lang="english")
+							self.write_msg(id, translator.translate(trns))
+							connection.commit()
 
+						elif msg.startswith('eng rus '):
+							trns = msg.replace('eng rus', '')
+							self.write_msg(id, "Перевожу текст с английского на русский...")
+							translator= Translator(from_lang="english",to_lang="russian")
+							self.write_msg(id, translator.translate(trns))
+							connection.commit()
+							
 						else:
 							self.write_msg(id, "Не верный запрос. Введите \" Команды \", чтобы узнать список команд.")
 
