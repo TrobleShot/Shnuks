@@ -1,15 +1,15 @@
 import random
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-import datetime
-import threading
+import datetime #время
+import threading #потоки
 import time
-import pymysql
+import pymysql #бд
 from pymysql.cursors import DictCursor
-import wikipedia
+import wikipedia #википедия
 import pyowm
-import math
-from translate import Translator
+import math #округлить число
+from translate import Translator #переводчик 
 
 
 class Mail:
@@ -21,7 +21,7 @@ class Mail:
 
 #--------------------------------------------------------------------------------
 
-mails = [Mail(8, 25, "Начало первой пары через 5 минут!"), #первое число - часы, второе - минуты, строка - текст сообщения
+mails = [Mail(8, 25, "Начало первой пары через 5 минут!"), #Часы\Минуты\Текст
 		 Mail(8, 30, "Первая пара началась!"),
 		 Mail(10, 15, "Начало второй пары через 5 минут!"),
 	 	 Mail(10, 20, "Вторая пара началась!"),
@@ -79,14 +79,15 @@ class Bot:
 			self.longpoll = VkLongPoll(self.vk)
 
 			print("Создаю поток...")
-
 			thread = threading.Thread(target=self.check)
 			thread.start()
-
 			print("Создал!")
 
 			print("Запускаю \"антисон\"...")
 			self.antisleep()
+			print("Запустил!")
+
+			print("Запускаю погоду...")
 			print("Запустил!")
 
 			print("Бот запущен")
@@ -107,22 +108,23 @@ class Bot:
 		while True:
 			try:
 				now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-				for mail in mails:
-					if now.hour == mail.hours and now.minute == mail.minutes:
-						if mail.send:
-							mail.send = False
-							with connection.cursor() as cursor:
-								cursor.execute("SELECT user_id FROM Users")
-								for row in cursor:
-									self.write_msg(row["user_id"], mail.message)
-					else:
-						mail.send = True
+				if now.isoweekday() not in [6, 7]: # Если сегодня не суббота, воскресенье продолжай код...
+					for mail in mails:
+						if now.hour == mail.hours and now.minute == mail.minutes:
+							if mail.send:
+								mail.send = False
+								with connection.cursor() as cursor:
+									cursor.execute("SELECT user_id FROM Users")
+									for row in cursor:
+										self.write_msg(row["user_id"], mail.message)
+						else:
+							mail.send = True
 
 			except Exception as ex:
 				print("error (check):", ex)
 
 
-	def antisleep(self):
+	def antisleep(self): #Чтобы не уснула бесплатная БД 
 		try:
 			threading.Timer(600, self.antisleep).start()
 			with connection.cursor() as cursor:
@@ -130,7 +132,7 @@ class Bot:
 		except Exception as ex:
 			print("error (antisleep):", ex)
 
-
+	
 	def start(self):
 		while True:
 			try:
@@ -170,7 +172,7 @@ class Bot:
 							infor = wikipedia.summary(find, sentences=3)
 							self.write_msg(id, str(infor))
 							connection.commit()
-
+						
 						elif msg.startswith('погода '):
 							city = msg.replace('погода ', '')
 							self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
@@ -181,21 +183,19 @@ class Bot:
 							translator= Translator(from_lang="english",to_lang="russian")
 							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + translator.translate(w.get_status()))
 							connection.commit()
-							
+
 						elif msg.startswith('rus eng '):
 							trns = msg.replace('rus eng ', '')
 							self.write_msg(id, "Перевожу текст с русского на английский...")
 							translator= Translator(from_lang="russian",to_lang="english")
 							self.write_msg(id, translator.translate(trns))
-							connection.commit()
 
 						elif msg.startswith('eng rus '):
 							trns = msg.replace('eng rus', '')
 							self.write_msg(id, "Перевожу текст с английского на русский...")
 							translator= Translator(from_lang="english",to_lang="russian")
 							self.write_msg(id, translator.translate(trns))
-							connection.commit()
-							
+
 						else:
 							self.write_msg(id, "Не верный запрос. Введите \" Команды \", чтобы узнать список команд.")
 
