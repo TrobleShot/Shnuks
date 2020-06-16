@@ -176,12 +176,11 @@ class Bot:
 						elif msg.startswith('погода '):
 							city = msg.replace('погода ', '')
 							self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
-							owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = "ru")
+							owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = 'ru')
 							observation = owm.weather_at_place(city)
 							w = observation.get_weather()
 							temperature = w.get_temperature('celsius')['temp']
-							translator= Translator(from_lang="english",to_lang="russian")
-							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + "Вижу: " + w.get_status())
+							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + w.get_detailed_status())
 							connection.commit()
 
 						elif msg.startswith('rus eng '):
