@@ -181,7 +181,7 @@ class Bot:
 							w = observation.get_weather()
 							temperature = w.get_temperature('celsius')['temp']
 							translator= Translator(from_lang="english",to_lang="russian")
-							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + "Вижу: " + w.get_status()))
+							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + "Вижу: " + w.get_status())
 							connection.commit()
 
 						elif msg.startswith('rus eng '):
