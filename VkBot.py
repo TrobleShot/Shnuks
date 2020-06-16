@@ -180,7 +180,7 @@ class Bot:
 							observation = owm.weather_at_place(city)
 							w = observation.get_weather()
 							temperature = w.get_temperature('celsius')['temp']
-							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + w.get_detailed_status())
+							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + "Вижу: " + w.get_detailed_status().titile())
 							connection.commit()
 
 						elif msg.startswith('rus eng '):
