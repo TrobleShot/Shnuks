@@ -83,11 +83,12 @@ class Bot:
 			thread.start()
 			print("Создал!")
 
-			print("Запускаю \"антисон\"...")
+			print("Запускаю антисон...")
 			self.antisleep()
 			print("Запустил!")
 
-			print("Запускаю погоду...")
+			print("Запускаю вечный онлайн...")
+			self.online()
 			print("Запустил!")
 
 			print("Бот запущен")
@@ -95,6 +96,13 @@ class Bot:
 
 		except Exception as ex:
 			print("error (__init__):", ex)
+
+
+	def online(self): #Сообщество всегда онлайн
+		try:
+			self.vk.method("groups.enableOnline", {"group_id": 193390774})
+		except Exception as ex:
+			print("error (online):", ex)
 
 
 	def write_msg(self, user_id, message):
