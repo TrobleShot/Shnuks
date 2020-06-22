@@ -157,6 +157,7 @@ class Bot:
 									self.write_msg(id, "Вы успешно подписались на рассылку\nВведите \"Отписаться\" чтобы отключить рассылку.")
 								connection.commit()
 
+
 						elif msg == "отписаться":
 							with connection.cursor() as cursor:
 								cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
@@ -166,6 +167,7 @@ class Bot:
 									self.write_msg(id, "Вы не подписывались")
 								connection.commit()
 
+
 						elif msg == "команды":
 							self.write_msg(id, "⚙Список команд:")
 							self.write_msg(id, "🔍Для поиска в Википедии введите: \"Поиск <ваш запрос>\". ")
@@ -173,30 +175,42 @@ class Bot:
 							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"Подписаться\". ")
 							connection.commit()
 
+
 						elif msg.startswith('поиск '):
-							wikipedia.set_lang("ru")
-							find = msg.replace('поиск ', '')
-							self.write_msg(id, "Ищу результаты по поиску в википедии: " + find.title() + " ...")
-							infor = wikipedia.summary(find, sentences=3)
-							self.write_msg(id, str(infor))
+							try:
+								wikipedia.set_lang("ru")
+								find = msg.replace('поиск ', '')
+								self.write_msg(id, "Ищу результаты в википедии: " + find.title() + " ...")
+								infor = wikipedia.summary(find, sentences=3)
+								self.write_msg(id, str(infor))
+							except:
+								self.write_msg(id, "Результат не найден, попробуйте ещё раз.")
+							
 							connection.commit()
 						
+
 						elif msg.startswith('погода '):
 							city = msg.replace('погода ', '')
-							self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
-							owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = 'ru')
-							observation = owm.weather_at_place(city)
-							w = observation.get_weather()
-							status = w.get_detailed_status()
-							temperature = w.get_temperature('celsius')['temp']
-							self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + status.title())
+							try:
+								self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
+								owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = 'ru')
+								observation = owm.weather_at_place(city)
+								w = observation.get_weather()
+								status = w.get_detailed_status()
+								temperature = w.get_temperature('celsius')['temp']
+								self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + status.title())
+							except:
+								self.write_msg(id, "Город не найден, попробуйте ещё раз.")
+
 							connection.commit()
+
 
 						elif msg.startswith('rus eng '):
 							trns = msg.replace('rus eng ', '')
 							self.write_msg(id, "Перевожу текст с русского на английский...")
 							translator= Translator(from_lang="russian",to_lang="english")
 							self.write_msg(id, translator.translate(trns))
+
 
 						elif msg.startswith('eng rus '):
 							trns = msg.replace('eng rus', '')
@@ -205,7 +219,7 @@ class Bot:
 							self.write_msg(id, translator.translate(trns))
 
 						else:
-							self.write_msg(id, "Не верный запрос. Введите \" Команды \", чтобы узнать список команд.")
+							self.write_msg(id, "Команда не найдена.")
 
 			except Exception as ex:
 				connection.connect_timeout = 10000000000000
