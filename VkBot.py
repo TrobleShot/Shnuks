@@ -57,7 +57,15 @@ keyboard = '''
                "label":"Отписаться"
             },
             "color": "negative"
-         }
+         },
+		 {
+            "action": {
+               "type":"text",
+               "label":"Команды"
+            },
+            "color": "primary"
+		}
+		 
       ]
    ]
 }
@@ -100,7 +108,9 @@ class Bot:
 
 	def online(self): #Сообщество всегда онлайн
 		try:
-			self.vk.method("groups.enableOnline", {"group_id": 193390774})
+			while True:
+				self.vk.method("groups.enableOnline", {"group_id": 193390774})
+				time.sleep(600)
 		except Exception as ex:
 			print("error (online):", ex)
 
