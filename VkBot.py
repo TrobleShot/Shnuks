@@ -32,10 +32,10 @@ mails = [Mail(8, 25, "Начало первой пары через 5 минут
 
 token = "663f6be35f8b95159a155b8534c52b28c2a6a1b6252b3f526c4b03788f73e6d1cc66d65fa978eddbea104"
 
-connection = pymysql.connect(host='sql7.freesqldatabase.com',
-						  	 user='sql7347793',
-						  	 password='IghqNH1JGK',
-						  	 db='sql7347793',
+connection = pymysql.connect(host='db4free.net',
+						  	 user='vkrsbot',
+						  	 password='89181449101',
+						  	 db='vkrsbot',
 						  	 charset='utf8mb4',
 						  	 cursorclass=DictCursor)
 
