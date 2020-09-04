@@ -124,7 +124,7 @@ class Bot:
 		while True:
 			try:
 				now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-				if now.isoweekday() not in [6, 7]: # Если сегодня не суббота, воскресенье продолжай код...
+				if now.isoweekday() not in [7]: # Если сегодня не суббота, воскресенье продолжай код... not in [6, 7]:
 					for mail in mails:
 						if now.hour == mail.hours and now.minute == mail.minutes:
 							if mail.send:
