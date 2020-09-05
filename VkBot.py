@@ -79,7 +79,8 @@ class Bot:
 			print("Создание таблицы Users, если она не существует...")
 			with connection.cursor() as cursor:
 				cursor.execute("CREATE TABLE IF NOT EXISTS Users (user_id INT PRIMARY KEY);")
-			print("Создал!")
+				cursor.execute("CREATE TABLE IF NOT EXISTS All_Users (user_id INT PRIMARY KEY);")
+			print("Создано!")
 
 			self.vk = vk_api.VkApi(token=token)
 			self.longpoll = VkLongPoll(self.vk)
@@ -108,9 +109,9 @@ class Bot:
 		try:
 			while True:
 				self.vk.method("groups.enableOnline", {"group_id": 193390774})
-				time.sleep(600)
-		except Exception as ex:
-			print("error (online):", ex)
+				time.sleep(120)
+		except:
+			pass
 
 
 	def write_msg(self, user_id, message):
@@ -163,7 +164,7 @@ class Bot:
 									self.write_msg(id, "Вы уже подписаны!")
 								else:
 									self.write_msg(id, "Вы успешно подписались на рассылку\nВведите \"Отписаться\" чтобы отключить рассылку.")
-								connection.commit()
+							connection.commit()
 
 
 						elif msg == "отписаться":
@@ -173,7 +174,7 @@ class Bot:
 									self.write_msg(id, "Вы отписались от рассылки")
 								else:
 									self.write_msg(id, "Вы не подписывались")
-								connection.commit()
+							connection.commit()
 
 
 						elif msg == "команды":
@@ -181,6 +182,22 @@ class Bot:
 							self.write_msg(id, "🔍Для поиска в Википедии введите: \"Поиск <ваш запрос>\". ")
 							self.write_msg(id, "🌦 Чтобы узнать погоду введите: \"Погода <город>\". ")
 							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"Подписаться\". ")
+							
+							try: # Добавляет всех юсеров в отдельную таблицу для выполнения общей рассылки, тем кто написал боту 
+								with connection.cursor() as cursor:
+									cursor.execute("INSERT IGNORE INTO All_Users (user_id) VALUES (%s)", id)
+							except:
+								pass
+							connection.commit()
+
+
+						elif msg.startswith('рассылка ') and id == 271693414:
+							spam = msg.replace('рассылка ', '')
+							with connection.cursor() as cursor:
+									cursor.execute("SELECT user_id FROM Users")
+									cursor.execute("SELECT user_id FROM All_Users")
+									for row in cursor:
+										self.write_msg(row["user_id"], spam)
 							connection.commit()
 
 
@@ -218,16 +235,18 @@ class Bot:
 							self.write_msg(id, "Перевожу текст с русского на английский...")
 							translator= Translator(from_lang="russian",to_lang="english")
 							self.write_msg(id, translator.translate(trns))
-
+							connection.commit()
 
 						elif msg.startswith('eng rus '):
 							trns = msg.replace('eng rus', '')
 							self.write_msg(id, "Перевожу текст с английского на русский...")
 							translator= Translator(from_lang="english",to_lang="russian")
 							self.write_msg(id, translator.translate(trns))
+                        
 
 						else:
 							self.write_msg(id, "Команда не найдена.")
+                            
 
 			except Exception as ex:
 				connection.connect_timeout = 10000000000000
