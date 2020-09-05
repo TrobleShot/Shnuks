@@ -11,7 +11,6 @@ import pyowm
 import math #округлить число
 from translate import Translator #переводчик 
 
-
 class Mail:
 	def __init__(self, hours: int, minutes: int, message: str):
 		self.hours = hours
@@ -21,14 +20,14 @@ class Mail:
 
 #--------------------------------------------------------------------------------
 
-mails = [Mail(8, 10, "Начало первой пары через 5 минут!"), #Часы\Минуты\Текст
-		 Mail(8, 15, "Первая пара началась!"),
-		 Mail(9, 55, "Начало второй пары через 5 минут!"),
-	 	 Mail(10, 00, "Вторая пара началась!"),
-		 Mail(11, 40, "Начало третьей пары через 5 минут!"),
-		 Mail(11, 45, "Третья пара началась!")]
+mails = [Mail(8, 40, "Начало первой пары через 5 минут!"), #Часы\Минуты\Текст
+		 Mail(8, 45, "Первая пара началась!"),
+		 Mail(10, 25, "Начало второй пары через 5 минут!"),
+	 	 Mail(10, 30, "Вторая пара началась!"),
+		 Mail(12, 10, "Начало третьей пары через 5 минут!"),
+		 Mail(12, 15, "Третья пара началась!")]
 
-token = "663f6be35f8b95159a155b8534c52b28c2a6a1b6252b3f526c4b03788f73e6d1cc66d65fa978eddbea104"
+token = "a0cd9c62cd844d73e9a841a1730746f11917476fd2e017f30882d3496e7b0c57596d4ddca0d8d80e8f820"
 
 connection = pymysql.connect(host='db4free.net',
 						  	 user='vkrsbot',
@@ -59,7 +58,7 @@ keyboard = '''
 		 {
             "action": {
                "type":"text",
-               "label":"Команды"
+               "label":"Поток 2"
             },
             "color": "primary"
 		}
@@ -76,11 +75,10 @@ class Bot:
 		try:
 			print("Подключение к бд...")
 			print("Подключился!")
-			print("Создание таблицы Users, если она не существует...")
+			print("Создание таблицы Users_Podslywka, если она не существует...")
 			with connection.cursor() as cursor:
-				cursor.execute("CREATE TABLE IF NOT EXISTS Users (user_id INT PRIMARY KEY);")
-				cursor.execute("CREATE TABLE IF NOT EXISTS All_Users (user_id INT PRIMARY KEY);")
-			print("Создано!")
+				cursor.execute("CREATE TABLE IF NOT EXISTS Users_Podslywka (user_id INT PRIMARY KEY);")
+			print("Создал!")
 
 			self.vk = vk_api.VkApi(token=token)
 			self.longpoll = VkLongPoll(self.vk)
@@ -97,9 +95,10 @@ class Bot:
 			print("Запускаю вечный онлайн...")
 			self.online()
 			print("Запустил!")
-
-			print("Бот запущен")
-
+			
+			today = datetime.datetime.today()
+			print( today.strftime("Бот запушен. %d/%m/%Y") ) # '04/05/2017'
+			
 
 		except Exception as ex:
 			print("error (__init__):", ex)
@@ -108,7 +107,7 @@ class Bot:
 	def online(self): #Сообщество всегда онлайн
 		try:
 			while True:
-				self.vk.method("groups.enableOnline", {"group_id": 193390774})
+				self.vk.method("groups.enableOnline", {"group_id": 194288350})
 				time.sleep(120)
 		except:
 			pass
@@ -125,13 +124,13 @@ class Bot:
 		while True:
 			try:
 				now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-				if now.isoweekday() not in [7]: # Если сегодня не суббота, воскресенье продолжай код... not in [6, 7]:
+				if now.isoweekday() not in [7]: # Если сегодня не суббота, воскресенье продолжай код...
 					for mail in mails:
 						if now.hour == mail.hours and now.minute == mail.minutes:
 							if mail.send:
 								mail.send = False
 								with connection.cursor() as cursor:
-									cursor.execute("SELECT user_id FROM Users")
+									cursor.execute("SELECT user_id FROM Users_Podslywka")
 									for row in cursor:
 										self.write_msg(row["user_id"], mail.message)
 						else:
@@ -143,9 +142,9 @@ class Bot:
 
 	def antisleep(self): #Чтобы не уснула бесплатная БД 
 		try:
-			threading.Timer(600, self.antisleep).start()
+			threading.Timer(200, self.antisleep).start()
 			with connection.cursor() as cursor:
-				cursor.execute("SELECT * FROM Users")
+				cursor.execute("SELECT * FROM Users_Podslywka")
 		except Exception as ex:
 			print("error (antisleep):", ex)
 
@@ -159,93 +158,49 @@ class Bot:
 						msg = event.text.lower()
 						if msg == "подписаться":
 							with connection.cursor() as cursor:
-								cursor.execute("INSERT IGNORE INTO Users (user_id) VALUES (%s)", id)
+								cursor.execute("INSERT IGNORE INTO Users_Podslywka (user_id) VALUES (%s)", id)
 								if cursor.rowcount == 0:
-									self.write_msg(id, "Вы уже подписаны!")
+									self.write_msg(id, "Вы уже подписаны! ")
 								else:
-									self.write_msg(id, "Вы успешно подписались на рассылку\nВведите \"Отписаться\" чтобы отключить рассылку.")
-							connection.commit()
+									self.write_msg(id, "Вы успешно подписались на рассылку четвертого потока.\nСоздатель бота: @xx69x69xx")
+								connection.commit()
 
 
 						elif msg == "отписаться":
 							with connection.cursor() as cursor:
-								cursor.execute("DELETE FROM Users WHERE user_id = %s", id)
+								cursor.execute("DELETE FROM Users_Podslywka WHERE user_id = %s", id)
 								if cursor.rowcount != 0:
-									self.write_msg(id, "Вы отписались от рассылки")
+									self.write_msg(id, "Вы отписались от рассылки.")
 								else:
-									self.write_msg(id, "Вы не подписывались")
+									self.write_msg(id, "Вы не подписывались.")
+								connection.commit()
+
+							
+						elif msg == "поток 2":
+							self.write_msg(id, "Группа для второго потока: https://vk.com/scharagabot.\nСоздатель бота: @xx69x69xx")
 							connection.commit()
 
 
-						elif msg == "команды":
-							self.write_msg(id, "⚙Список команд:")
-							self.write_msg(id, "🔍Для поиска в Википедии введите: \"Поиск <ваш запрос>\". ")
-							self.write_msg(id, "🌦 Чтобы узнать погоду введите: \"Погода <город>\". ")
-							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"Подписаться\". ")
-							
-							try: # Добавляет всех юсеров в отдельную таблицу для выполнения общей рассылки, тем кто написал боту 
-								with connection.cursor() as cursor:
-									cursor.execute("INSERT IGNORE INTO All_Users (user_id) VALUES (%s)", id)
+						elif msg == "шнюкс" or "шнюс":
+							self.write_msg(id, "Ожидайте, с вами свяжется Шнюк.")
+							self.write_msg(289138746, "Покупатель хочет шнюкса! " + "vk.com/id" + str(id))
+							connection.commit()
+
+
+						elif msg.startswith('пост '):
+							post = msg.replace('пост ', '')
+							try:
+								self.write_msg(id, "Ваш пост отправлен на обработку модераторам. Ожидайте...")
+								self.write_msg(271693414, "Вам предложили новый пост " + "vk.com/id" + str(id) + " \nСодержание поста: " + post)
+								self.write_msg(478012162, "Вам предложили новый пост " + "vk.com/id" + str(id) + " \nСодержание поста: " + post)
 							except:
 								pass
-							connection.commit()
-
-
-						elif msg.startswith('рассылка ') and id == 271693414:
-							spam = msg.replace('рассылка ', '')
-							with connection.cursor() as cursor:
-									cursor.execute("SELECT user_id FROM Users")
-									for row in cursor:
-										self.write_msg(row["user_id"], spam)
-							connection.commit()
-
-
-						elif msg.startswith('поиск '):
-							try:
-								wikipedia.set_lang("ru")
-								find = msg.replace('поиск ', '')
-								self.write_msg(id, "Ищу результаты в википедии: " + find.title() + " ...")
-								infor = wikipedia.summary(find, sentences=3)
-								self.write_msg(id, str(infor))
-							except:
-								self.write_msg(id, "Результат не найден, попробуйте ещё раз.")
 							
 							connection.commit()
-						
-
-						elif msg.startswith('погода '):
-							city = msg.replace('погода ', '')
-							try:
-								self.write_msg(id, "Измеряю погоду в городе " + city.title() + "...")
-								owm = pyowm.OWM('523f5772a5e781cf832e2150a2b78b02', language = 'ru')
-								observation = owm.weather_at_place(city)
-								w = observation.get_weather()
-								status = w.get_detailed_status()
-								temperature = w.get_temperature('celsius')['temp']
-								self.write_msg(id, "В городе " + city.title() + " " + str(math.ceil(temperature)) + "°. " + status.title())
-							except:
-								self.write_msg(id, "Город не найден, попробуйте ещё раз.")
-
-							connection.commit()
-
-
-						elif msg.startswith('rus eng '):
-							trns = msg.replace('rus eng ', '')
-							self.write_msg(id, "Перевожу текст с русского на английский...")
-							translator= Translator(from_lang="russian",to_lang="english")
-							self.write_msg(id, translator.translate(trns))
-							connection.commit()
-
-						elif msg.startswith('eng rus '):
-							trns = msg.replace('eng rus', '')
-							self.write_msg(id, "Перевожу текст с английского на русский...")
-							translator= Translator(from_lang="english",to_lang="russian")
-							self.write_msg(id, translator.translate(trns))
-                        
 
 						else:
-							self.write_msg(id, "Команда не найдена.")
-                            
+							self.write_msg(id, "Данной команды не существует.")
+							
 
 			except Exception as ex:
 				connection.connect_timeout = 10000000000000
