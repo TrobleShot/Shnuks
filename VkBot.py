@@ -169,7 +169,7 @@ class Bot:
 								if cursor.rowcount == 0:
 									self.write_msg(id, "Вы уже подписаны! ")
 								else:
-									self.write_msg(id, "Вы успешно подписались на рассылку четвертого потока.\nСоздатель бота: @xx69x69xx")
+									self.write_msg(id, "Вы успешно подписались на рассылку четвертого потока.")
 								connection.commit()
 
 
@@ -184,7 +184,7 @@ class Bot:
 
 							
 						elif msg == "поток 2":
-							self.write_msg(id, "Группа для второго потока: https://vk.com/scharagabot.\nСоздатель бота: @xx69x69xx")
+							self.write_msg(id, "Группа для второго потока: https://vk.com/scharagabot.")
 							connection.commit()
 
 
