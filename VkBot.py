@@ -217,8 +217,7 @@ class Bot:
 							connection.commit()
 
 						else:
-							self.write_msg(id, "Данной команды не существует.")
-							
+							pass
 
 			except Exception as ex:
 				connection.connect_timeout = 10000000000000
