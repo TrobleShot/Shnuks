@@ -2,6 +2,7 @@ import random
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 import datetime #время
+import threading #потоки
 import time
 import pymysql #бд
 from pymysql.cursors import DictCursor
@@ -50,7 +51,7 @@ keyboard = '''
 		 {
             "action": {
                "type":"text",
-               "label":"Рассылка"
+               "label":"Команды"
             },
             "color": "primary"
 		}
@@ -116,7 +117,7 @@ class Bot:
 
 						elif msg == "команды":
 							self.write_msg(id, "⚙Список команд:")
-							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"потоки\". ")
+							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"рассылка\". ")
 							self.write_msg(id, "📰Чтобы опубликовать свой пост на стене введите: \n \"Пост <тут ваш пост> \". ")
 
 
