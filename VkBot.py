@@ -27,7 +27,7 @@ mails = [Mail(8, 40, "Начало первой пары через 5 минут
 		 Mail(12, 10, "Начало третьей пары через 5 минут!"),
 		 Mail(12, 15, "Третья пара началась!")]
 
-token = "a0cd9c62cd844d73e9a841a1730746f11917476fd2e017f30882d3496e7b0c57596d4ddca0d8d80e8f820"
+token = "c76dcb2f3b509f0e124a69d1425667dadba28228cf668ff4c98740b00f2dc24eaa5dd805764b496d1e181"
 
 connection = pymysql.connect(host='db4free.net',
 						  	 user='vkrsbot',
@@ -41,13 +41,6 @@ keyboard = '''
    "one_time": false,
    "buttons": [
       [
-         {
-            "action": {
-               "type": "text",
-               "label": "Подписаться"
-            },
-            "color": "positive"
-         },
 		 {
             "action": {
                "type":"text",
@@ -55,17 +48,10 @@ keyboard = '''
             },
             "color": "negative"
          },
-         {
-            "action": {
-               "type":"text",
-               "label":"Шнюкс"
-            },
-            "color": "negative"
-         },
 		 {
             "action": {
                "type":"text",
-               "label":"Потоки"
+               "label":"Рассылка"
             },
             "color": "primary"
 		}
@@ -89,15 +75,6 @@ class Bot:
 
 			self.vk = vk_api.VkApi(token=token)
 			self.longpoll = VkLongPoll(self.vk)
-
-			print("Создаю поток...")
-			thread = threading.Thread(target=self.check)
-			thread.start()
-			print("Создал!")
-
-			print("Запускаю антисон...")
-			self.antisleep()
-			print("Запустил!")
 
 			print("Запускаю вечный онлайн...")
 			self.online()
@@ -127,35 +104,6 @@ class Bot:
 			print("error (write_msg, {0}, {1}):".format(user_id, message), ex)
 
 
-	def check(self):
-		while True:
-			try:
-				now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-				if now.isoweekday() not in [7]: # Если сегодня не суббота, воскресенье продолжай код...
-					for mail in mails:
-						if now.hour == mail.hours and now.minute == mail.minutes:
-							if mail.send:
-								mail.send = False
-								with connection.cursor() as cursor:
-									cursor.execute("SELECT user_id FROM Users_Podslywka")
-									for row in cursor:
-										self.write_msg(row["user_id"], mail.message)
-						else:
-							mail.send = True
-
-			except Exception as ex:
-				print("error (check):", ex)
-
-
-	def antisleep(self): #Чтобы не уснула бесплатная БД 
-		try:
-			threading.Timer(200, self.antisleep).start()
-			with connection.cursor() as cursor:
-				cursor.execute("SELECT * FROM Users_Podslywka")
-		except Exception as ex:
-			print("error (antisleep):", ex)
-
-	
 	def start(self):
 		while True:
 			try:
@@ -163,46 +111,18 @@ class Bot:
 					if event.type == VkEventType.MESSAGE_NEW and event.to_me:
 						id = event.user_id
 						msg = event.text.lower()
-						if msg == "подписаться":
-							with connection.cursor() as cursor:
-								cursor.execute("INSERT IGNORE INTO Users_Podslywka (user_id) VALUES (%s)", id)
-								if cursor.rowcount == 0:
-									self.write_msg(id, "Вы уже подписаны! ")
-								else:
-									self.write_msg(id, "Вы успешно подписались на рассылку четвертого потока.")
-								connection.commit()
-
-
-						elif msg == "отписаться":
-							with connection.cursor() as cursor:
-								cursor.execute("DELETE FROM Users_Podslywka WHERE user_id = %s", id)
-								if cursor.rowcount != 0:
-									self.write_msg(id, "Вы отписались от рассылки.")
-								else:
-									self.write_msg(id, "Вы не подписывались.")
-								connection.commit()
-
-							
-						elif msg == "потоки":
-							self.write_msg(id, "Группа для всех потоков: https://vk.com/scharagabot.")
-							connection.commit()
-
-
-						elif msg == "запись":
+						if msg == "запись":
 							self.write_msg(id, "📰Чтобы опубликовать свой пост на стене введите: \" Пост <тут ваш пост> \". ")
+
 
 						elif msg == "команды":
 							self.write_msg(id, "⚙Список команд:")
-							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"Подписаться\". ")
+							self.write_msg(id, "🕐Чтобы получать уведомления о начале пары введите: \"потоки\". ")
 							self.write_msg(id, "📰Чтобы опубликовать свой пост на стене введите: \n \"Пост <тут ваш пост> \". ")
-							self.write_msg(id, "🥑Чтобы купить шнюкс введите: \"Шнюкс\". ")
-							self.write_msg(id, "⚠Чтобы подписаться на рассылки остальных потоков введите: \"Потоки\". ")
 
 
-						elif msg == "шнюкс":
-							self.write_msg(id, "Ожидайте, с вами свяжется Шнюк.")
-							self.write_msg(289138746, "Новый клиент: " + "vk.com/id" + str(id))
-							connection.commit()
+						elif msg == "рассылка":
+							self.write_msg(id, "Чтобы получать уведомления о начале пары введите, напишите в личку данному сообществу https://vk.com/shg_bot")
 
 
 						elif msg.startswith('пост '):
@@ -214,13 +134,10 @@ class Bot:
 							except:
 								pass
 							
-							connection.commit()
-
 						else:
 							pass
 
 			except Exception as ex:
-				connection.connect_timeout = 10000000000000
 				print("error (start):", ex)
 
 
