@@ -2,7 +2,6 @@ import random
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 import datetime #время
-import threading #потоки
 import time
 import pymysql #бд
 from pymysql.cursors import DictCursor
