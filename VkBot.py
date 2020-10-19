@@ -122,7 +122,7 @@ class Bot:
 
 
 						elif msg == "рассылка":
-							self.write_msg(id, "Чтобы получать уведомления о начале пары введите, напишите в личку данному сообществу https://vk.com/shg_bot")
+							self.write_msg(id, "Чтобы получать уведомления о начале пары напишите в личку данному сообществу https://vk.com/shg_bot")
 
 
 						elif msg.startswith('пост '):
